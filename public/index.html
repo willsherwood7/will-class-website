@@ -1,76 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Aim Trainer</title>
+	<title>Click Per Second Calculator</title>
 	<style>
 		body {
-			margin: 0;
-			padding: 0;
-			background-color: #f2f2f2;
 			font-family: Arial, sans-serif;
 			text-align: center;
 		}
 
 		h1 {
-			margin-top: 50px;
-			font-size: 48px;
-			color: #333;
+			font-size: 36px;
+			margin-top: 40px;
 		}
 
-		#game-area {
-			margin-top: 50px;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			height: 400px;
+		#cps {
+			font-size: 72px;
+			margin-top: 20px;
 		}
 
-		#target {
-			background-color: #333;
-			width: 50px;
-			height: 50px;
-			border-radius: 50%;
-			position: absolute;
+		button {
+			font-size: 24px;
+			padding: 10px 20px;
+			margin-top: 40px;
+			cursor: pointer;
 		}
 	</style>
 </head>
 <body>
-	<h1>Aim Trainer</h1>
-	<div id="game-area">
-		<div id="target"></div>
-	</div>
+	<h1>Click Per Second Calculator</h1>
+	<div id="cps">0</div>
+	<button id="startBtn">Start</button>
+
 	<script>
-		var gameArea = document.getElementById("game-area");
-		var target = document.getElementById("target");
-		var score = 0;
-		
-		// Generate a random position for the target
-		function generateTargetPosition() {
-			var x = Math.floor(Math.random() * (gameArea.offsetWidth - target.offsetWidth));
-			var y = Math.floor(Math.random() * (gameArea.offsetHeight - target.offsetHeight));
-			return {x: x, y: y};
+		let clicks = 0;
+		let startTime;
+		let intervalId;
+
+		function startTimer() {
+			clicks = 0;
+			startTime = new Date().getTime();
+			intervalId = setInterval(updateCps, 1000);
 		}
 
-		// Move the target to a random position
-		function moveTarget() {
-			var position = generateTargetPosition();
-			target.style.left = position.x + "px";
-			target.style.top = position.y + "px";
+		function updateCps() {
+			let currentTime = new Date().getTime();
+			let elapsedTime = (currentTime - startTime) / 1000;
+			let cps = clicks / elapsedTime;
+			document.getElementById("cps").textContent = cps.toFixed(2);
 		}
 
-		// Add a click event listener to the target
-		target.addEventListener("click", function() {
-			score++;
-			moveTarget();
+		document.getElementById("startBtn").addEventListener("click", () => {
+			startTimer();
 		});
 
-		// Move the target every second
-		setInterval(moveTarget, 1000);
-
-		// Update the score every second
-		setInterval(function() {
-			document.title = "Aim Trainer - Score: " + score;
-		}, 1000);
+		document.addEventListener("click", () => {
+			clicks++;
+		});
 	</script>
 </body>
 </html>
