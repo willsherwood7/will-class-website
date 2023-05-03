@@ -1,25 +1,194 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>My Resume</title>
-    <link id="theme-style" rel="stylesheet" href="resume-light.css">
+    <meta charset="UTF-8">
+    <title>Atari Breakout</title>
+    <style>
+      #canvas {
+        border: 1px solid black;
+        margin: 0 auto;
+        display: block;
+      }
+    </style>
   </head>
   <body>
-    <h1>Title Text</h1>
-    <h2>Subtitle Text</h2>
-    <p>Body Text goes here...</p>
-
-    <button onclick="toggleTheme()">Toggle Theme</button>
-
+    <button onclick="toggleMode()">Toggle Mode</button>
+    <canvas id="canvas" width="800" height="600"></canvas>
     <script>
-      function toggleTheme() {
-        const themeStyle = document.getElementById('theme-style');
-        if (themeStyle.getAttribute('href') === 'resume-light.css') {
-          themeStyle.setAttribute('href', 'resume-dark.css');
-        } else {
-          themeStyle.setAttribute('href', 'resume-light.css');
+      let canvas = document.getElementById("canvas");
+      let ctx = canvas.getContext("2d");
+
+      let isLightMode = true;
+
+      let ball = {
+        x: canvas.width / 2,
+        y: canvas.height - 30,
+        radius: 10
+      };
+      let ballSpeed = { x: 5, y: -5 };
+
+      let paddleHeight = 10;
+      let paddleWidth = 75;
+      let paddleX = (canvas.width - paddleWidth) / 2;
+
+      let leftPressed = false;
+      let rightPressed = false;
+
+      let blockRows = 6;
+      let blockCols = 10;
+      let blockWidths = [30, 40, 50];
+      let blockHeight = 20;
+      let blockPadding = 10;
+      let blockOffsetTop = 30;
+      let blockOffsetLeft = (canvas.width - (blockCols * (Math.max(...blockWidths) + blockPadding))) / 2;
+
+      let blocks = [];
+      for (let row = 0; row < blockRows; row++) {
+        blocks[row] = [];
+        for (let col = 0; col < blockCols; col++) {
+          let blockWidth = blockWidths[Math.floor(Math.random() * blockWidths.length)];
+          let x = col * (blockWidth + blockPadding) + blockOffsetLeft;
+          let y = row * (blockHeight + blockPadding) + blockOffsetTop;
+          blocks[row][col] = { x: x, y: y, width: blockWidth, height: blockHeight, isAlive: true };
         }
       }
+
+      let score = 0;
+
+      function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function drawBlocks() {
+        for (let row = 0; row < blockRows; row++) {
+          for (let col = 0; col < blockCols; col++) {
+            let block = blocks[row][col];
+            if (block.isAlive) {
+              ctx.beginPath();
+              ctx.rect(block.x, block.y, block.width, block.height);
+              ctx.fillStyle = "#0095DD";
+              ctx.fill();
+              ctx.closePath();
+            }
+          }
+        }
+      }
+
+      function moveBall() {
+        ball.x += ballSpeed.x;
+        ball.y += ballSpeed.y;
+        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+          ballSpeed.x = -ballSpeed.x;
+        }
+        if (ball.y - ball.radius < 0) {
+          ballSpeed.y = -ballSpeed.y;
+        } else if (ball.y + ball.x)
+
+		if (ball.y + ball.radius > canvas.height) {
+            if (ball.x > paddleX && ball.x < paddleX + paddleWidth) {
+              ballSpeed.y = -ballSpeed.y;
+              ballSpeed.x = 8 * ((ball.x - (paddleX + paddleWidth / 2)) / paddleWidth);
+            } else {
+              alert("GAME OVER");
+              document.location.reload();
+              clearInterval(intervalId);
+            }
+          }
+        }
+        
+        function drawScore() {
+          ctx.font = "16px Arial";
+          ctx.fillStyle = "#0095DD";
+          ctx.fillText("Score: " + score, 8, 20);
+        }
+        
+        function toggleMode() {
+          isLightMode = !isLightMode;
+          let backgroundColor = isLightMode ? "#FFFFFF" : "#000000";
+          let textColor = isLightMode ? "#000000" : "#FFFFFF";
+          document.body.style.backgroundColor = backgroundColor;
+          document.body.style.color = textColor;
+        }
+        
+        function draw() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          drawBall();
+          drawPaddle();
+          drawBlocks();
+          drawScore();
+          collisionDetection();
+          movePaddle();
+          moveBall();
+          score += updateScore();
+        }
+        
+        function collisionDetection() {
+          for (let row = 0; row < blockRows; row++) {
+            for (let col = 0; col < blockCols; col++) {
+              let block = blocks[row][col];
+              if (block.isAlive) {
+                if (ball.x > block.x && ball.x < block.x + block.width && ball.y > block.y && ball.y < block.y + block.height) {
+                  ballSpeed.y = -ballSpeed.y;
+                  block.isAlive = false;
+                }
+              }
+            }
+          }
+        }
+        
+        function movePaddle() {
+          if (rightPressed && paddleX < canvas.width - paddleWidth) {
+            paddleX += 7;
+          } else if (leftPressed && paddleX > 0) {
+            paddleX -= 7;
+          }
+        }
+        
+        function updateScore() {
+          let numDestroyed = 0;
+          for (let row = 0; row < blockRows; row++) {
+            for (let col = 0; col < blockCols; col++) {
+              let block = blocks[row][col];
+              if (!block.isAlive) {
+                numDestroyed++;
+              }
+            }
+          }
+          return numDestroyed;
+        }
+        
+        let intervalId = setInterval(draw, 10);
+        
+        document.addEventListener("keydown", keyDownHandler);
+        document.addEventListener("keyup", keyUpHandler);
+        
+        function keyDownHandler(event) {
+          if (event.keyCode == 39) {
+            rightPressed = true;
+          } else if (event.keyCode == 37) {
+            leftPressed = true;
+          }
+        }
+        
+        function keyUpHandler(event) {
+          if (event.keyCode == 39) {
+            rightPressed = false;
+          } else if (event.keyCode == 37) {
+            leftPressed = false;
+          }
+        }
     </script>
   </body>
 </html>
